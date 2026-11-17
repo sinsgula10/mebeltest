@@ -58,9 +58,29 @@ export function links() {
  * @param {Route.LoaderArgs} args
  */
 export async function loader(args) {
+  const {storefront, env} = args.context;
+  const isLandingRoute = new URL(args.request.url).pathname === '/';
+
+  if (isLandingRoute) {
+    return {
+      cart: Promise.resolve(null),
+      isLoggedIn: Promise.resolve(false),
+      footer: Promise.resolve(null),
+      header: null,
+      publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+      shop: Promise.resolve(null),
+      consent: {
+        checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
+        storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
+        withPrivacyBanner: false,
+        country: storefront.i18n.country,
+        language: storefront.i18n.language,
+      },
+    };
+  }
+
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
-  const {storefront, env} = args.context;
 
   return {
     ...deferredData,
@@ -74,8 +94,8 @@ export async function loader(args) {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
       withPrivacyBanner: false,
-      country: args.context.storefront.i18n.country,
-      language: args.context.storefront.i18n.language,
+      country: storefront.i18n.country,
+      language: storefront.i18n.language,
     },
   };
 }
@@ -119,8 +139,8 @@ function loadDeferredData({context}) {
       return null;
     });
   return {
-    cart: cart.get(),
-    isLoggedIn: customerAccount.isLoggedIn(),
+    cart: cart.get().catch(() => null),
+    isLoggedIn: customerAccount.isLoggedIn().catch(() => false),
     footer,
   };
 }

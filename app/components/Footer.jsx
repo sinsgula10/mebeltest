@@ -10,7 +10,7 @@ export function Footer({footer: footerPromise, header, publicStoreDomain}) {
       <Await resolve={footerPromise}>
         {(footer) => (
           <footer className="footer">
-            {footer?.menu && header.shop.primaryDomain?.url && (
+            {footer?.menu && header?.shop?.primaryDomain?.url && (
               <FooterMenu
                 menu={footer.menu}
                 primaryDomainUrl={header.shop.primaryDomain.url}

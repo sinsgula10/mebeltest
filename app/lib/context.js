@@ -1,4 +1,4 @@
-import {createHydrogenContext} from '@shopify/hydrogen';
+import {createHydrogenContext, InMemoryCache} from '@shopify/hydrogen';
 import {AppSession} from '~/lib/session';
 import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
 
@@ -23,23 +23,28 @@ export async function createHydrogenRouterContext(
   env,
   executionContext,
 ) {
-  /**
-   * Open a cache instance in the worker and a custom session instance.
-   */
-  if (!env?.SESSION_SECRET) {
-    throw new Error('SESSION_SECRET environment variable is not set');
-  }
+  const sessionSecret =
+    env?.SESSION_SECRET || 'top1mebel-krg-default-session-secret';
 
-  const waitUntil = executionContext.waitUntil.bind(executionContext);
-  const [cache, session] = await Promise.all([
-    caches.open('hydrogen'),
-    AppSession.init(request, [env.SESSION_SECRET]),
-  ]);
+  const waitUntil = executionContext?.waitUntil
+    ? executionContext.waitUntil.bind(executionContext)
+    : () => {};
 
   const resolvedEnv = {
     ...env,
-    PUBLIC_STORE_DOMAIN: env.PUBLIC_STORE_DOMAIN || 'mock.shop',
+    SESSION_SECRET: sessionSecret,
+    PUBLIC_STORE_DOMAIN: env?.PUBLIC_STORE_DOMAIN || 'mock.shop',
   };
+
+  const cachePromise =
+    typeof caches !== 'undefined' && typeof caches.open === 'function'
+      ? caches.open('hydrogen').catch(() => new InMemoryCache())
+      : Promise.resolve(new InMemoryCache());
+
+  const [cache, session] = await Promise.all([
+    cachePromise,
+    AppSession.init(request, [sessionSecret]),
+  ]);
 
   const hydrogenContext = createHydrogenContext(
     {
