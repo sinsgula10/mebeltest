@@ -1,0 +1,11 @@
+name = "top1mebel-krg"
+main = "dist/server/index.js"
+compatibility_date = "2026-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "dist/client"
+binding = "ASSETS"
+
+[vars]
+PUBLIC_STORE_DOMAIN = "mock.shop"
